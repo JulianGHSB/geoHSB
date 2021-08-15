@@ -13,6 +13,19 @@
   }
 }
 
+#mapid { height: 180px; }
+
+.App-Map {
+  background-color: #282c34;
+  min-height: 80vh;
+  min-width: 160vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
 .App-header {
   background-color: #282c34;
   min-height: 100vh;
