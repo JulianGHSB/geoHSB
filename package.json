@@ -3,14 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@react-leaflet/core": "^1.1.0",
     "@testing-library/jest-dom": "5.11.4",
     "@testing-library/react": "11.1.0",
     "@testing-library/user-event": "12.1.10",
+    "axios": "^0.21.1",
+    "evergreen-ui": "^6.4.0",
     "leaflet": "1.7.1",
+    "leaflet-routing-machine": "^3.2.12",
+    "rcolor": "^2.0.2",
     "react": "17.0.2",
     "react-dom": "17.0.2",
-    "react-leaflet": "3.1.0",
+    "react-leaflet": "3.2.1",
     "react-scripts": "4.0.3",
+    "shpjs": "^4.0.2",
+    "uuid": "^8.3.2",
     "web-vitals": "1.0.1"
   },
   "scripts": {
@@ -25,20 +32,14 @@
       "react-app/jest"
     ]
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not op_mini all"
+  ],
   "devDependencies": {
-    "babel-core": "^6.26.3",
+    "@babel/core": "^7.15.0",
+    "@babel/preset-env": "^7.15.0",
     "less": "^4.1.1",
     "less-loader": "^8.1.1",
     "react-leaflet-control": "^2.1.2",

@@ -1,18 +1,14 @@
-module.exports = {
-    module: {
-        loaders: [{
-            test: /\.less$/,
-            loaders: [
-                'style-loader',
-                'css-loader',
-                {
-                    loader: 'less-loader',
-                    options: {
-                        modifyVars: CustomAntThemeModifyVars(),
-                        javascriptEnabled: true // Less version > 3.0.0
-                    }
+module: {
+    rules: [
+        {
+            test: /\.m?js$/,
+            exclude: /(node_modules|bower_components)/,
+            use: {
+                loader: 'babel-loader',
+                options: {
+                    presets: ['@babel/preset-env']
                 }
-            ]
-        }]
-    }
-};
+            }
+        }
+    ]
+}
