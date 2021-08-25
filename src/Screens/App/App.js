@@ -32,6 +32,18 @@ function App() {
   const [allLayers, setAllLayers] = useState([]);
   const [pureData, setPureData] = useState([]);
   const [ready, setReady] = useState(false);
+  const [routeA, setRouteA] = useState({});
+  const [routeB, setRouteB] = useState({});
+  const [handleRouteA, setHandleRouteA] = useState(true);
+  const [selectedPosition, setSelectedPosition] = useState([36.16592421016811, -86.78202485392626]);
+  const markerRef = useRef(null)
+  const routingRef = useRef(null)
+
+ useEffect(() => {
+    if (routingRef.current && routeA.latA && routeB.latB) {
+      routingRef.current.setWaypoints([[routeA.latA, routeA.lnA], [routeB.latB, routeB.lnB]]);
+    }
+  }, [routeA, routeB, routingRef]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -82,9 +94,6 @@ function App() {
     setViewPort({ viewport })
   }
 
-  const [selectedPosition, setSelectedPosition] = useState([0,0]);
-
-  const markerRef = useRef(null)
   const eventHandlers = useMemo(
       () => ({
         dragend() {
@@ -92,6 +101,9 @@ function App() {
           if (marker != null) {
             const pos = marker.getLatLng()
             console.log(pos)
+            if ( handleRouteA) setRouteA({ latA: pos.lat, lnA: pos.lng})
+            else setRouteB({ latB: pos.lat, lnB: pos.lng});
+            setHandleRouteA(!handleRouteA);
             setSelectedPosition([
               pos.lat,
               pos.lng
@@ -106,6 +118,9 @@ function App() {
 
     const map = useMapEvents({
       click(e) {
+        if ( handleRouteA) setRouteA({ latA: e.latlng.lat, lnA: e.latlng.lng})
+        else setRouteB({ latB: e.latlng.lat, lnB: e.latlng.lng});
+        setHandleRouteA(!handleRouteA);
         setSelectedPosition([
           e.latlng.lat,
           e.latlng.lng
@@ -166,7 +181,7 @@ function App() {
             attributionControl
             zoomControl>
           <Markers />
-          <RoutingMachine />
+          <RoutingMachine ref={routingRef} routeA={routeA} routeB={routeB} />
           <ClickHandler doTask={showClick}/>
           <MapConsumer>
             {(map) => {
@@ -178,6 +193,7 @@ function App() {
           <TileLayer
               attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              className="map-tiles"
           />
         </MapContainer>
     </div>

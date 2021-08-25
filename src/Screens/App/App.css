@@ -57,3 +57,12 @@
     transform: rotate(360deg);
   }
 }
+
+@media (prefers-color-scheme: dark) {
+  .map-tiles {
+    filter:var(--map-tiles-filter, none);
+  }
+}
+:root {
+  --map-tiles-filter: brightness(0.6) invert(1) contrast(6) hue-rotate(300deg) saturate(0.4) brightness(0.8);
+}
