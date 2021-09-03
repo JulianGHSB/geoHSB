@@ -8,3 +8,9 @@ export const getDataFromFileReq = async (rawFile) => {
         });
     return data;
 }
+
+export const transformLatLongToPoint = (geo) => {
+       return geo.map((pair) => {
+            return [pair.lat, pair.lng]
+        })
+}

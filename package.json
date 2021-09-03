@@ -11,6 +11,7 @@
     "evergreen-ui": "^6.4.0",
     "leaflet": "1.7.1",
     "leaflet-routing-machine": "^3.2.12",
+    "point-in-polygon": "^1.1.0",
     "rcolor": "^2.0.2",
     "react": "17.0.2",
     "react-dom": "17.0.2",
@@ -18,13 +19,17 @@
     "react-scripts": "4.0.3",
     "shpjs": "^4.0.2",
     "uuid": "^8.3.2",
-    "web-vitals": "1.0.1"
+    "web-vitals": "1.0.1",
+    "zustand": "^3.5.9"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "osrm-install": "node ./scripts/osrmDownload.js && node ./scripts/osrmInstall.js",
+    "osrm-start": "node ./scripts/osrmStart.js",
+    "osrm-stop": "node ./scripts/osrmStop.js"
   },
   "eslintConfig": {
     "extends": [

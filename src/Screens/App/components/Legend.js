@@ -4,7 +4,7 @@ import {Card, Heading, majorScale, Pane, PlusIcon, Text} from "evergreen-ui";
 
 export function Legend({legendItems}) {
     const [value, setValue] = useState()
-    console.log(legendItems)
+
     const items = legendItems.map((r) => {
 
         return <Pane key={r?.id} display="flex" alginItems="center" textAlign={'center'}
@@ -41,6 +41,6 @@ export function Legend({legendItems}) {
         <Heading style={{marginBottom: 5}}>Legend</Heading>
         {items}
         <Card borderRadius={12} marginTop={10} justifyContent={'center'} alignItems={'center'} backgroundColor={'rgba(111, 111, 250, 0.72)'} elevation={2}>
-            <PlusIcon color='rgba(250, 250, 250, 1)' size={20}/></Card>
+            <PlusIcon color='rgba(250, 250, 250, 1)' size={14}/></Card>
     </Pane>
 }
