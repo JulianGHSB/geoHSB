@@ -1,5 +1,9 @@
 .App {
+  flex-direction: row;
   text-align: center;
+  background-color: #282c34;
+  height: 100%;
+  flex: 1;
 }
 
 .App-logo {
@@ -17,8 +21,10 @@
 
 .App-Map {
   background-color: #282c34;
-  min-height: 80vh;
-  min-width: 160vh;
+  height: 70vh;
+  margin-top: 5vh;
+  margin-left: 10vh;
+  max-width: 80%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -28,13 +34,17 @@
 
 .App-header {
   background-color: #282c34;
-  min-height: 100vh;
+  min-height: 5vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
   color: white;
+}
+
+.App-body {
+  background-color: #282c34;
 }
 
 .App-link {
@@ -48,4 +58,13 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+@media (prefers-color-scheme: dark) {
+  .map-tiles {
+    filter:var(--map-tiles-filter, none);
+  }
+}
+:root {
+  --map-tiles-filter: brightness(0.6) invert(1) contrast(6) hue-rotate(300deg) saturate(0.4) brightness(0.8);
 }
