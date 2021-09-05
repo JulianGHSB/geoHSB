@@ -13,12 +13,14 @@ import {Legend} from "./components/Legend";
 import {v4 as uuidv4} from 'uuid';
 import RoutingMachine from "./components/RoutingMachine";
 import pointInPolygon from 'point-in-polygon';
-import {transformLatLongToPoint} from "../../utils/dataUtils";
+import {isEmpty, transformLatLongToLongLatPoint, transformLatLongToPoint} from "../../utils/dataUtils";
 import {dataStore} from "../../stores/dataStore";
 import create from "zustand";
 import {reqGetData} from "../../actions/actions";
-
-const showClick = (loc) => console.log(loc);
+import {MapSwitch} from "./components/MapSwitch";
+import {isArray} from "leaflet/src/core/Util";
+import * as L from "leaflet";
+import {booleanPointInPolygon, pointsWithinPolygon} from "@turf/turf";
 
 function MapConsumer(props) {
     return null;
@@ -47,6 +49,13 @@ function App() {
     const useDataStore = create(dataStore);
     const data = useDataStore((state => state.data));
     const addElem = useDataStore(state => state.add);
+    const [useRoutingClick, setUseRoutingClick] = useState(false);
+    const [constraintViolated, setConstraintViolated] = useState({});
+    const [violatedGEOJson, setViolatedGEOJson] = useState(null);
+    const greenIcon = L.icon({
+        iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
+        iconSize: [26, 42],
+    })
 
     useEffect(() => {
         if (routingRef.current && routeA.latA && routeB.latB) {
@@ -54,32 +63,42 @@ function App() {
         }
     }, [routeA, routeB, routingRef]);
 
+   useEffect(() => {
+        if (!isEmpty(constraintViolated)){
+            const arr = Object.entries(constraintViolated);
+            const elem = arr.map(([key, value]) => {
+               return <GeoJSON key={key + " hit"} data={value.polyObj} style={{color: 'white'}}/>
+            })
+            setViolatedGEOJson(elem)
+        }
+    }, [constraintViolated])
+
     useEffect(() => {
         const fetchData = async () => {
             const response = await reqGetData();
             const reqs = await response.json();
-            console.log(reqs)
             let aLayers = [];
             const reqData = reqs?.map(async (req) => {
                 const res = await axios.get(req.url, {params: REQPARAMS});
                 const obj = await res.data;
                 obj.name = req.name;
+                obj.color = req.color;
                 obj.id = req.id;
                 obj.type = req.type;
                 return obj;
             });
             reqData?.forEach((req) => {
-                const color = generateColor();
                 req.then((r) => {
-                        r.color = color;
-                        addElem(r);
 
                         const layer = r?.features?.map((data) => {
                             data.uuid = uuidv4();
-                            return <GeoJSON key={data.uuid} data={data} style={{color: color}}/>
+                            data.areaType = r.type;
+                            return <GeoJSON key={data.uuid} data={data} style={{color: r.color}}/>
                         })
                         aLayers = [...aLayers, layer];
                         setAllLayers(aLayers);
+
+                        addElem(r);
                     }
                 );
             });
@@ -126,13 +145,16 @@ function App() {
 
         const map = useMapEvents({
             click(e) {
-                if (handleRouteA) setRouteA({latA: e.latlng.lat, lnA: e.latlng.lng})
-                else setRouteB({latB: e.latlng.lat, lnB: e.latlng.lng});
-                setHandleRouteA(!handleRouteA);
-                setSelectedPosition([
-                    e.latlng.lat,
-                    e.latlng.lng
-                ]);
+                if (useRoutingClick) {
+                    if (handleRouteA) setRouteA({latA: e.latlng.lat, lnA: e.latlng.lng})
+                    else setRouteB({latB: e.latlng.lat, lnB: e.latlng.lng});
+                    setHandleRouteA(!handleRouteA);
+                } else {
+                    setSelectedPosition([
+                        e.latlng.lat,
+                        e.latlng.lng
+                    ]);
+                }
             },
         })
         const markerMsg = `Latitude: ${selectedPosition[0]}
@@ -144,6 +166,7 @@ function App() {
                     key={selectedPosition[0]}
                     position={selectedPosition}
                     draggable
+                    icon={greenIcon}
                     eventHandlers={eventHandlers}
                 > <Popup>
                     {markerMsg}
@@ -153,19 +176,33 @@ function App() {
 
     }
 
+    const clear = () => {
+        setConstraintViolated({});
+    }
+
     const saveCoords = (coords, geoData) => {
-        const points = transformLatLongToPoint(coords);
-        console.log("BLA4" + JSON.stringify(geoData))
-/*        geoData.forEach((dataSet) => {
-            dataSet.features.forEach((polyObj) => {
-                coords.map((coord) => {
-                    const poly = polyObj?.geometry?.coordinates;
-                    if (pointInPolygon(coord, poly)) {
-                    }
-                })
-            });
-        })
-        setRouteCoords(coords);*/
+        const points = transformLatLongToLongLatPoint(coords);
+        let hitMap = {};
+        let succ = [];
+        if (!isEmpty(coords) && !isEmpty(geoData)) {
+            geoData.forEach((dataSet) => {
+                dataSet.features.forEach((polyObj) => {
+                    points.forEach((point) => {
+                            const poly = polyObj?.geometry;
+                            const name = polyObj?.properties?.NAME;
+                            const type = polyObj?.areaType;
+                          if (!isEmpty(point) && !isEmpty(poly)) {
+                                const hit = booleanPointInPolygon(point, poly);
+                                if (hit) {
+                                    hitMap[polyObj.uuid] = {point, polyObj, name, type};
+                                }
+                            }
+                        })
+                });
+            })
+        }
+        setConstraintViolated(hitMap);
+        setRouteCoords(coords);
     }
 
     return (
@@ -178,11 +215,13 @@ function App() {
                         integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
                         crossOrigin=""/>
                 <p>
-                    Geile Karte für Beamte
+                    H.A.W.A. - Hunting Area Warning App
                 </p>
             </header>
-            {ready ?
-                <Legend legendItems={data}/>
+            {ready ? <>
+                    <Legend legendItems={data}/>
+                    <MapSwitch name="Click for Route" doTask={setUseRoutingClick} initialChecked={useRoutingClick}/>
+                </>
                 : <Pane border
                         elevation={2}
                         justifyContent={'center'}
@@ -214,8 +253,8 @@ function App() {
                 attributionControl
                 zoomControl>
                 <Markers/>
-                <RoutingMachine ref={routingRef} data={data} setRouteCoords={saveCoords} />
-                <ClickHandler doTask={showClick}/>
+                <RoutingMachine ref={routingRef} data={data} setRouteCoords={saveCoords}/>
+                <ClickHandler doTask={clear}/>
                 <MapConsumer>
                     {(map) => {
                         console.log('map center:', map.getCenter())
@@ -223,6 +262,7 @@ function App() {
                     }}</MapConsumer>
                 {/*  <Shapefile url.json="https://services3.arcgis.com/PWXNAH2YKmZY7lBq/arcgis/rest/services/HuntingAllowed/FeatureServer"/>*/}
                 {allLayers}
+                {violatedGEOJson}
                 <TileLayer
                     attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

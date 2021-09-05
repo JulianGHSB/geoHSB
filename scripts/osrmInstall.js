@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require("fs");
 const execSync = require('child_process').execSync;
 const exec = require('child_process').exec;
 
@@ -9,7 +10,15 @@ const workingDir = path.join(__dirname, "/data").toString();
 runBuild();
 
 async function runBuild() {
+    const ensureDirSync = (dirpath) => {
+        try {
+            return fs.mkdirSync(dirpath)
+        } catch (err) {
+            if (err.code !== 'EEXIST') throw err
+        }
+    }
     try {
+        ensureDirSync(workingDir);
         await execSync('docker run -t -v' + workingDir + ':/data osrm/osrm-backend osrm-extract -p /opt/car.lua /data/'+fileName, {
             stdio: 'inherit',
             shell: true,

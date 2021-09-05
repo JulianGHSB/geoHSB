@@ -15,9 +15,9 @@ if (!fs.existsSync(workingDir)) {
 
 if (!fs.existsSync(path.join(workingDir, fileName))) {
     const file = fs.createWriteStream(path.join(workingDir, fileName));
-    console.log("Download: "+url);
+    console.log("Downloading: "+url);
     const request =  http.get(url, async function (response) {
         await response.pipe(file);
-        console.log("Download complete");
+        console.log("Download successful");
     });
 }
