@@ -16,16 +16,18 @@ export function MapSwitch({name, initialChecked, doTask}) {
                  style={{
                      position: 'absolute',
                      right: 0,
-                     top: 0,
+                     top: 150,
                      margin: 5,
                      padding: 15,
                      flexDirection: 'column',
                      minHeight: 50,
                      backgroundColor: 'white',
-                     borderRadius: 16
+                     borderRadius: 16,
+                     justifyContent: 'center',
+                     alignItems: 'center'
                  }}
                  marginX={majorScale(2)}>
-        <Heading style={{marginBottom: 5}}>{name}</Heading>
-        <Switch checked={checked} onChange={(e) => handleChange(e.target.checked)} />
+        <Heading style={{marginBottom: 10}}>{name}</Heading>
+        <Switch marginLeft="30%" checked={checked} onChange={(e) => handleChange(e.target.checked)} />
     </Pane>
 }

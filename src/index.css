@@ -20,3 +20,7 @@ html {
 #root {
   height: 100%;
 }
+
+.leaflet-control-container .leaflet-routing-container-hide {
+  display: none;
+}

@@ -1,4 +1,5 @@
 .App {
+  flex-direction: row;
   text-align: center;
   background-color: #282c34;
   height: 100%;
@@ -21,6 +22,7 @@
 .App-Map {
   background-color: #282c34;
   height: 70vh;
+  margin-top: 5vh;
   margin-left: 10vh;
   max-width: 80%;
   display: flex;

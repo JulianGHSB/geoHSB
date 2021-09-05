@@ -1,6 +1,16 @@
 import logo from '../../logo.svg';
 import './App.css';
-import {MapContainer, TileLayer, Marker, Popup, useMapEvents, useMapEvent, GeoJSON} from 'react-leaflet';
+import {
+    MapContainer,
+    TileLayer,
+    Marker,
+    Popup,
+    useMapEvents,
+    useMapEvent,
+    GeoJSON,
+    Circle,
+    Pane as LeafPane, useMap, Tooltip
+} from 'react-leaflet';
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {Button, Pane, Text, majorScale, toaster, Card, Heading, PlusIcon, Spinner} from "evergreen-ui";
 import {ClickHandler} from "./components/Clickhandler";
@@ -12,8 +22,7 @@ import {generateColor} from "../../utils/colorUtils";
 import {Legend} from "./components/Legend";
 import {v4 as uuidv4} from 'uuid';
 import RoutingMachine from "./components/RoutingMachine";
-import pointInPolygon from 'point-in-polygon';
-import {isEmpty, transformLatLongToLongLatPoint, transformLatLongToPoint} from "../../utils/dataUtils";
+import {getCenterOfCoordinates, isEmpty, transformLatLongToLongLatPoint} from "../../utils/dataUtils";
 import {dataStore} from "../../stores/dataStore";
 import create from "zustand";
 import {reqGetData} from "../../actions/actions";
@@ -49,11 +58,11 @@ function App() {
     const useDataStore = create(dataStore);
     const data = useDataStore((state => state.data));
     const addElem = useDataStore(state => state.add);
-    const [useRoutingClick, setUseRoutingClick] = useState(false);
+    const [useHikingMode, setUseHikingMod] = useState(false);
     const [constraintViolated, setConstraintViolated] = useState({});
     const [violatedGEOJson, setViolatedGEOJson] = useState(null);
     const greenIcon = L.icon({
-        iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
+        iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png",
         iconSize: [26, 42],
     })
 
@@ -63,15 +72,48 @@ function App() {
         }
     }, [routeA, routeB, routingRef]);
 
-   useEffect(() => {
-        if (!isEmpty(constraintViolated)){
+    useEffect(() => {
+        if (!isEmpty(constraintViolated)) {
             const arr = Object.entries(constraintViolated);
             const elem = arr.map(([key, value]) => {
-               return <GeoJSON key={key + " hit"} data={value.polyObj} style={{color: 'white'}}/>
+                let clr;
+                if (!useHikingMode){
+                    if (value?.name && value.type === 'safe') {
+                        clr = '#ff073a';
+                        toaster.warning("Conflict With: " + value.name);
+                    }
+                    if (value?.name && value.type === 'hunt') {
+                        clr = '#0FFF50';
+                        toaster.notify("Hunting in: " + value.name);
+                    }
+                } else {
+                    if (value?.name && value.type === 'hunt') {
+                        clr = '#ff073a';
+                        toaster.danger("Conflict With: " + value.name);
+                    }
+                    if (value?.name && value.type === 'safe') {
+                        clr = '#1F51FF';
+                        toaster.notify("Walking through nature reserve: " + value.name);
+                    }
+                }
+                return <GeoJSON key={key + " hit"} data={value.polyObj} style={{color: clr}}/>
             })
             setViolatedGEOJson(elem)
         }
     }, [constraintViolated])
+
+    const drawLabels = (f, l) => {
+        const label = L.marker(l.getBounds().getCenter(),
+            {
+                icon: L.divIcon({
+                    className: 'labels',
+                    html: f?.properties?.NAME,
+                    iconSize: [100, 50]
+                })
+            }
+        )
+    }
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -93,7 +135,13 @@ function App() {
                         const layer = r?.features?.map((data) => {
                             data.uuid = uuidv4();
                             data.areaType = r.type;
-                            return <GeoJSON key={data.uuid} data={data} style={{color: r.color}}/>
+                            let center = getCenterOfCoordinates(data?.geometry?.coordinates[0]);
+                            data.center = center;
+                            return <GeoJSON key={data.uuid} data={data} style={{color: r.color}}>
+                                <Tooltip direction="bottom" offset={[0, 20]} opacity={0.8} sticky>
+                                    {data?.properties?.NAME}
+                                </Tooltip>
+                            </GeoJSON>
                         })
                         aLayers = [...aLayers, layer];
                         setAllLayers(aLayers);
@@ -102,7 +150,6 @@ function App() {
                     }
                 );
             });
-            // toaster.notify('data loaded successfully');
         };
         fetchData();
     }, [])
@@ -128,9 +175,7 @@ function App() {
                 const marker = markerRef.current
                 if (marker != null) {
                     const pos = marker.getLatLng()
-                    if (handleRouteA) setRouteA({latA: pos.lat, lnA: pos.lng})
-                    else setRouteB({latB: pos.lat, lnB: pos.lng});
-                    setHandleRouteA(!handleRouteA);
+                    saveCoords([{lng: pos.lng, lat: pos.lat}], data)
                     setSelectedPosition([
                         pos.lat,
                         pos.lng
@@ -145,11 +190,12 @@ function App() {
 
         const map = useMapEvents({
             click(e) {
-                if (useRoutingClick) {
+                if (useHikingMode) {
                     if (handleRouteA) setRouteA({latA: e.latlng.lat, lnA: e.latlng.lng})
                     else setRouteB({latB: e.latlng.lat, lnB: e.latlng.lng});
                     setHandleRouteA(!handleRouteA);
                 } else {
+                    saveCoords([{lng: e.latlng.lng, lat: e.latlng.lat}], data)
                     setSelectedPosition([
                         e.latlng.lat,
                         e.latlng.lng
@@ -160,7 +206,7 @@ function App() {
         const markerMsg = `Latitude: ${selectedPosition[0]}
               Longitude: ${selectedPosition[1]}`;
         return (
-            selectedPosition ?
+            selectedPosition && !useHikingMode ?
                 <Marker
                     ref={markerRef}
                     key={selectedPosition[0]}
@@ -178,9 +224,11 @@ function App() {
 
     const clear = () => {
         setConstraintViolated({});
+        setViolatedGEOJson(null)
     }
 
     const saveCoords = (coords, geoData) => {
+        clear();
         const points = transformLatLongToLongLatPoint(coords);
         let hitMap = {};
         let succ = [];
@@ -188,16 +236,16 @@ function App() {
             geoData.forEach((dataSet) => {
                 dataSet.features.forEach((polyObj) => {
                     points.forEach((point) => {
-                            const poly = polyObj?.geometry;
-                            const name = polyObj?.properties?.NAME;
-                            const type = polyObj?.areaType;
-                          if (!isEmpty(point) && !isEmpty(poly)) {
-                                const hit = booleanPointInPolygon(point, poly);
-                                if (hit) {
-                                    hitMap[polyObj.uuid] = {point, polyObj, name, type};
-                                }
+                        const poly = polyObj?.geometry;
+                        const name = polyObj?.properties?.NAME;
+                        const type = polyObj?.areaType;
+                        if (!isEmpty(point) && !isEmpty(poly)) {
+                            const hit = booleanPointInPolygon(point, poly);
+                            if (hit) {
+                                hitMap[polyObj.uuid] = {point, polyObj, name, type};
                             }
-                        })
+                        }
+                    })
                 });
             })
         }
@@ -220,7 +268,7 @@ function App() {
             </header>
             {ready ? <>
                     <Legend legendItems={data}/>
-                    <MapSwitch name="Click for Route" doTask={setUseRoutingClick} initialChecked={useRoutingClick}/>
+                    <MapSwitch name="Hiking Mode" doTask={setUseHikingMod} initialChecked={useHikingMode}/>
                 </>
                 : <Pane border
                         elevation={2}
@@ -253,7 +301,7 @@ function App() {
                 attributionControl
                 zoomControl>
                 <Markers/>
-                <RoutingMachine ref={routingRef} data={data} setRouteCoords={saveCoords}/>
+                { useHikingMode && <RoutingMachine ref={routingRef} data={data} setRouteCoords={saveCoords}/> }
                 <ClickHandler doTask={clear}/>
                 <MapConsumer>
                     {(map) => {
