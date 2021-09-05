@@ -135,8 +135,7 @@ function App() {
                         const layer = r?.features?.map((data) => {
                             data.uuid = uuidv4();
                             data.areaType = r.type;
-                            let center = getCenterOfCoordinates(data?.geometry?.coordinates[0]);
-                            data.center = center;
+                            data.center = getCenterOfCoordinates(data?.geometry?.coordinates[0]);
                             return <GeoJSON key={data.uuid} data={data} style={{color: r.color}}>
                                 <Tooltip direction="bottom" offset={[0, 20]} opacity={0.8} sticky>
                                     {data?.properties?.NAME}
