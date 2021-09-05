@@ -182,7 +182,7 @@ function App() {
                 }
             },
         }),
-        [],
+        [data],
     )
 
     const Markers = () => {
