@@ -9,7 +9,7 @@ active hunting areas.
 First please go to the node.js server project and install it:
 https://github.com/JulianGHSB/geoNode
 
-You need to be on the root folder level of the porject.
+__You need to be on the root folder level of the project.__
 
 Now install all dependencies using:
 
