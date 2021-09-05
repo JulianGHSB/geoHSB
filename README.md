@@ -14,6 +14,9 @@ Now install all dependencies using:
 ### `npm install`
 
 Afterwards you need to install a local osrm docker container.
+
+First of all please create a folder named __'data'__ inside the __scripts__ folder of the project.
+
 Use the scripts provided in the scripts folder by:
 
 ### `npm run osrm-install`
