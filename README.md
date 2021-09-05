@@ -36,3 +36,22 @@ Now you can start the H.A.W.A app.
 
 Then you can open [http://localhost:3000](http://localhost:3000)
 to view H.A.W.A in the browser in development mode.
+
+
+## Usage:
+
+With Hiking Mode turned off you can click on the map and a marker will be set.
+This marker is the position you would like to hunt at.
+You can also drag the marker around.
+
+If the marker lies within a Hunting Area it will be marked green.
+If it is inside a nature reserve or an area which prohibits hunting, the area will turn red.
+
+With Hiking Mode enabled, you have to click to set route markers. 
+Initially you need to click twice to generate both of them.
+
+After that a route will be shown to you. If the route intersects a hunting area it will turn red.
+If it intersects a nature habitat it will turn blue.
+
+As a hiker you need to be aware of hunting areas and walk through them carefully. 
+Also in nature habitats you should be aware about the special protection of the wildlife.
